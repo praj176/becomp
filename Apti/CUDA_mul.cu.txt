@@ -1,0 +1,71 @@
+#include <iostream>
+#include <vector>
+
+// CUDA kernel for matrix multiplication
+__global__ void matrixMultiplication(float* a, float* b, float* c, int n) {
+    int row = blockIdx.y * blockDim.y + threadIdx.y;
+    int col = blockIdx.x * blockDim.x + threadIdx.x;
+
+    if (row < n && col < n) {
+        float sum = 0.0f;
+        for (int i = 0; i < n; i++) {
+            sum += a[row * n + i] * b[i * n + col];
+        }
+        c[row * n + col] = sum;
+    }
+}
+
+int main() {
+    int n;
+    std::cout << "Enter the size of the square matrices: ";
+    std::cin >> n;
+
+    // Allocate memory for matrices on the host (CPU)
+    std::vector<float> h_a(n * n);
+    std::vector<float> h_b(n * n);
+    std::vector<float> h_c(n * n);
+
+    // Initialize the matrices with random values
+    for (int i = 0; i < n * n; i++) {
+        h_a[i] = static_cast<float>(rand()) / RAND_MAX;
+        h_b[i] = static_cast<float>(rand()) / RAND_MAX;
+    }
+
+    // Allocate memory for matrices on the device (GPU)
+    float* d_a;
+    float* d_b;
+    float* d_c;
+    cudaMalloc(&d_a, n * n * sizeof(float));
+    cudaMalloc(&d_b, n * n * sizeof(float));
+    cudaMalloc(&d_c, n * n * sizeof(float));
+
+    // Copy matrices from host to device
+    cudaMemcpy(d_a, h_a.data(), n * n * sizeof(float), cudaMemcpyHostToDevice);
+    cudaMemcpy(d_b, h_b.data(), n * n * sizeof(float), cudaMemcpyHostToDevice);
+
+    // Define the number of threads per block and blocks per grid
+    int threadsPerBlock = 16;
+    dim3 blocksPerGrid((n + threadsPerBlock - 1) / threadsPerBlock, (n + threadsPerBlock - 1) / threadsPerBlock);
+
+    // Launch the CUDA kernel for matrix multiplication
+    matrixMultiplication<<<blocksPerGrid, threadsPerBlock>>>(d_a, d_b, d_c, n);
+
+    // Copy the result matrix from device to host
+    cudaMemcpy(h_c.data(), d_c, n * n * sizeof(float), cudaMemcpyDeviceToHost);
+
+    // Print the result matrix
+    std::cout << "Result Matrix:\n";
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            std::cout << h_c[i * n + j] << " ";
+        }
+        std::cout << std::endl;
+    }
+
+    // Free memory on the device
+    cudaFree(d_a);
+    cudaFree(d_b);
+    cudaFree(d_c);
+
+    return 0;
+}
