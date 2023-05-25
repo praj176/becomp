@@ -1,1 +1,13 @@
+To run the CUDA programs for addition of two large vectors and matrix multiplication, you will need an environment that supports CUDA programming, such as an NVIDIA GPU and the CUDA Toolkit installed on your system. Here's how you can run the programs:
+
+1. Addition of Two Large Vectors:
+   - Save the code in a file with a `.cu` extension, e.g., `vector_addition.cu`.
+   - Open a terminal or command prompt and navigate to the directory where you saved the file.
+   - Compile the program using the NVCC compiler, which is part of the CUDA Toolkit:
+     
+     nvcc vector_addition.cu -o vector_addition
+     
+   - Run the compiled executable:
+     
+     ./vector_addition
 
